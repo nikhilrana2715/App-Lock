@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">App Lock</string>
+    <string name="accessibility_service_description">Used by App Lock to detect when a locked application is opened in the foreground and prompt for authentication.</string>
+</resources>

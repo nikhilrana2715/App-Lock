@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppLock - Interactive Android App Simulator</title>
+    <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
+        .phone-mockup {
+            width: 380px;
+            height: 780px;
+            border-radius: 48px;
+            border: 12px solid #1e293b;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(59, 130, 246, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        .notch {
+            width: 140px;
+            height: 28px;
+            background-color: #1e293b;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-bottom-left-radius: 18px;
+            border-bottom-right-radius: 18px;
+            z-index: 100;
+        }
+        .screen-content {
+            height: 100%;
+            overflow-y: auto;
+            background-color: #090d16;
+            color: #f8fafc;
+        }
+        .screen-content::-webkit-scrollbar { width: 4px; }
+        .screen-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="flex flex-col lg:flex-row items-center gap-8 max-w-6xl w-full">
+        <!-- Control Dashboard & Info -->
+        <div class="flex-1 text-slate-200 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm font-semibold">
+                <i class="fa-solid fa-mobile-screen"></i> Live Interactive Browser Prototype
+            </div>
+            <h1 class="text-4xl font-extrabold text-white tracking-tight">AppLock Android Interface</h1>
+            <p class="text-slate-400 leading-relaxed">
+                Test the complete Material 3 AppLock flow directly in your browser. Launch apps, trigger instant lock screen overlays, draw 3x3 pattern codes, test 6-attempt lockout timers, and configure security settings.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                    <div class="flex items-center gap-3 text-blue-400 font-bold mb-1">
+                        <i class="fa-solid fa-desktop"></i> Computer Browser URL
+                    </div>
+                    <code class="text-xs text-slate-300 bg-slate-900 px-2 py-1 rounded block mt-1 overflow-x-auto select-all">http://localhost:3000</code>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                    <div class="flex items-center gap-3 text-emerald-400 font-bold mb-1">
+                        <i class="fa-solid fa-wifi"></i> Mobile Wi-Fi Active IP
+                    </div>
+                    <code class="text-xs text-slate-300 bg-slate-900 px-2 py-1 rounded block mt-1 overflow-x-auto select-all">http://10.227.240.227:3000</code>
+                </div>
+            </div>
+
+            <!-- Quick Jump Navigation -->
+            <div class="space-y-3 pt-2">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Quick Screen Jump</h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="switchScreen('welcome')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium transition">Onboarding</button>
+                    <button onclick="switchScreen('permissions')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium transition">Permissions</button>
+                    <button onclick="switchScreen('restricted_guide')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium transition">Restricted Settings</button>
+                    <button onclick="switchScreen('setup_lock')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium transition">Setup PIN/Pattern</button>
+                    <button onclick="switchScreen('home')" class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-semibold transition">Home (App List)</button>
+                    <button onclick="switchScreen('settings')" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium transition">Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Android Phone Mockup Container -->
+        <div class="phone-mockup relative flex-shrink-0">
+            <div class="notch"></div>
+            
+            <!-- Phone Status Bar -->
+            <div class="absolute top-0 left-0 right-0 h-10 px-6 flex items-center justify-between text-xs text-slate-300 font-medium z-50 pointer-events-none">
+                <span id="statusBarClock">6:50</span>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-wifi text-[10px]"></i>
+                    <span class="text-[10px] font-bold">5G</span>
+                    <i class="fa-solid fa-battery-full text-[12px]"></i>
+                </div>
+            </div>
+
+            <!-- Screen Viewport -->
+            <div id="screenViewport" class="screen-content pt-10 pb-6 px-4">
+                <!-- Dynamic Content Injected Here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- App State & Interactivity Engine -->
+    <script>
+        const state = {
+            currentScreen: 'home',
+            pin: '1234',
+            pattern: '0124',
+            lockType: 'PIN',
+            biometricsEnabled: true,
+            hidePatternPath: false,
+            failedAttempts: 0,
+            lockoutSeconds: 0,
+            unlockedApps: new Set(),
+            lockedPackages: new Set(['com.whatsapp', 'com.instagram', 'com.google.android.apps.photos', 'com.android.settings']),
+            apps: [
+                { name: 'WhatsApp', pkg: 'com.whatsapp', icon: 'fa-whatsapp', color: 'text-emerald-500', bg: 'bg-emerald-500/10', locked: true, sensitive: true },
+                { name: 'Photos & Gallery', pkg: 'com.google.android.apps.photos', icon: 'fa-image', color: 'text-blue-500', bg: 'bg-blue-500/10', locked: true, sensitive: true },
+                { name: 'Instagram', pkg: 'com.instagram', icon: 'fa-instagram', color: 'text-pink-500', bg: 'bg-pink-500/10', locked: true, sensitive: false },
+                { name: 'Settings', pkg: 'com.android.settings', icon: 'fa-gear', color: 'text-slate-400', bg: 'bg-slate-500/10', locked: true, sensitive: true },
+                { name: 'Play Store', pkg: 'com.android.vending', icon: 'fa-bag-shopping', color: 'text-cyan-500', bg: 'bg-cyan-500/10', locked: false, sensitive: true },
+                { name: 'Telegram', pkg: 'org.telegram.messenger', icon: 'fa-paper-plane', color: 'text-sky-400', bg: 'bg-sky-400/10', locked: false, sensitive: false },
+                { name: 'Files Manager', pkg: 'com.android.documentsui', icon: 'fa-folder-closed', color: 'text-amber-500', bg: 'bg-amber-500/10', locked: false, sensitive: true }
+            ],
+            targetApp: null,
+            inputBuffer: '',
+            searchQuery: '',
+            tabIndex: 0
+        };
+
+        setInterval(() => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            const clockEl = document.getElementById('statusBarClock');
+            if (clockEl) clockEl.innerText = timeStr;
+        }, 1000);
+
+        function switchScreen(screenName, extra = null) {
+            state.currentScreen = screenName;
+            if (extra) state.targetApp = extra;
+            renderScreen();
+        }
+
+        function renderScreen() {
+            const viewport = document.getElementById('screenViewport');
+            viewport.innerHTML = '';
+
+            switch(state.currentScreen) {
+                case 'welcome': renderWelcome(viewport); break;
+                case 'permissions': renderPermissions(viewport); break;
+                case 'restricted_guide': renderRestrictedGuide(viewport); break;
+                case 'setup_lock': renderSetupLock(viewport); break;
+                case 'home': renderHome(viewport); break;
+                case 'lock_overlay': renderLockOverlay(viewport); break;
+                case 'target_app': renderTargetApp(viewport); break;
+                case 'settings': renderSettings(viewport); break;
+            }
+        }
+
+        function renderWelcome(el) {
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between p-4 text-center">
+                    <div class="mt-12 space-y-6">
+                        <div class="w-24 h-24 mx-auto rounded-full bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-4xl shadow-lg">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-white">AppLock Security</h2>
+                        <p class="text-sm text-slate-400 leading-relaxed px-2">
+                            Protect private apps like WhatsApp, Photos, and Settings behind PIN, Pattern, or Fingerprint lock.
+                        </p>
+                    </div>
+                    <button onclick="switchScreen('permissions')" class="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base shadow-lg transition">
+                        Get Started
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderPermissions(el) {
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between p-2">
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-bold text-white mt-2">Required Permissions</h2>
+                        <p class="text-xs text-slate-400">AppLock needs permissions to detect foreground app launches and display lock screen overlays.</p>
+                        
+                        <div class="space-y-3 mt-4">
+                            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+                                <div class="pr-2">
+                                    <div class="text-sm font-bold text-white">Usage Access</div>
+                                    <div class="text-[11px] text-slate-400">Detect foreground app</div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-400 font-semibold"><i class="fa-solid fa-check"></i> Granted</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+                                <div class="pr-2">
+                                    <div class="text-sm font-bold text-white">Display over apps</div>
+                                    <div class="text-[11px] text-slate-400">Show lock overlay</div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-400 font-semibold"><i class="fa-solid fa-check"></i> Granted</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+                                <div class="pr-2">
+                                    <div class="text-sm font-bold text-white">Fast Lock Mode</div>
+                                    <div class="text-[11px] text-slate-400">Accessibility Service</div>
+                                </div>
+                                <button onclick="switchScreen('restricted_guide')" class="px-3 py-1 rounded-lg text-xs bg-blue-600 text-white font-semibold">Enable</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="switchScreen('setup_lock')" class="w-full py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm">
+                        Continue Setup
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderRestrictedGuide(el) {
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between p-2">
+                    <div class="space-y-3">
+                        <button onclick="switchScreen('permissions')" class="text-xs text-blue-400 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-left"></i> Back
+                        </button>
+                        <h2 class="text-lg font-bold text-white">Android 13+ Restricted Settings</h2>
+                        <p class="text-xs text-slate-400">Sideloaded apps require allowing restricted settings before enabling Accessibility.</p>
+                        
+                        <div class="space-y-2 text-xs">
+                            <div class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 flex gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center font-bold text-[10px]">1</span>
+                                <span>Go to <b>App Info</b> for AppLock.</span>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 flex gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center font-bold text-[10px]">2</span>
+                                <span>Tap <b>⋮ menu</b> in top right corner.</span>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 flex gap-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center font-bold text-[10px]">3</span>
+                                <span>Tap <b>Allow restricted settings</b>.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="switchScreen('permissions')" class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold text-xs">
+                        Understood & Continue
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderSetupLock(el) {
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between p-3 text-center">
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-bold text-white mt-2">Configure Lock Credential</h2>
+                        <div class="flex justify-center gap-2">
+                            <button onclick="state.lockType='PIN'; renderScreen();" class="px-4 py-1.5 rounded-full text-xs font-bold ${state.lockType === 'PIN' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}">PIN</button>
+                            <button onclick="state.lockType='PATTERN'; renderScreen();" class="px-4 py-1.5 rounded-full text-xs font-bold ${state.lockType === 'PATTERN' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}">Pattern</button>
+                        </div>
+                        
+                        <p class="text-xs text-slate-400">Current Default PIN: <code class="text-blue-400 font-bold">1234</code></p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700 space-y-2">
+                        <div class="text-xs text-slate-300 font-semibold">Security Recovery Question</div>
+                        <div class="text-[11px] text-slate-400">"What city were you born in?"</div>
+                        <input type="text" value="New York" disabled class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-300 text-center">
+                    </div>
+
+                    <button onclick="switchScreen('home')" class="w-full py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm">
+                        Finish & Activate Lock
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderHome(el) {
+            const filtered = state.apps.filter(app => {
+                const matchesSearch = app.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+                const matchesTab = state.tabIndex === 1 ? app.locked : true;
+                return matchesSearch && matchesTab;
+            });
+
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between pt-1">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-blue-500 text-lg"></i>
+                                <span class="font-extrabold text-base text-white">AppLock</span>
+                            </div>
+                            <button onclick="switchScreen('settings')" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300">
+                                <i class="fa-solid fa-gear text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" placeholder="Search installed apps..." value="${state.searchQuery}" oninput="state.searchQuery = this.value; renderHome(document.getElementById('screenViewport'));" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500">
+                        </div>
+
+                        <div class="flex border-b border-slate-800 text-xs">
+                            <button onclick="state.tabIndex=0; renderHome(document.getElementById('screenViewport'));" class="flex-1 py-2 font-bold text-center border-b-2 ${state.tabIndex === 0 ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400'}">All (${state.apps.length})</button>
+                            <button onclick="state.tabIndex=1; renderHome(document.getElementById('screenViewport'));" class="flex-1 py-2 font-bold text-center border-b-2 ${state.tabIndex === 1 ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400'}">Locked (${state.apps.filter(a => a.locked).length})</button>
+                        </div>
+
+                        <div class="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                            ${filtered.map(app => `
+                                <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between">
+                                    <div class="flex items-center gap-3 cursor-pointer" onclick="onTapApp('${app.pkg}')">
+                                        <div class="w-9 h-9 rounded-xl ${app.bg} flex items-center justify-center ${app.color} text-lg">
+                                            <i class="fa-solid ${app.icon}"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-bold text-slate-200 flex items-center gap-1">
+                                                ${app.name}
+                                                ${app.sensitive ? '<span class="text-[9px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-semibold">Recommended</span>' : ''}
+                                            </div>
+                                            <div class="text-[10px] text-slate-400">Tap to launch demo</div>
+                                        </div>
+                                    </div>
+                                    <button onclick="toggleLock('${app.pkg}')" class="w-11 h-6 rounded-full transition-colors relative ${app.locked ? 'bg-blue-600' : 'bg-slate-700'}">
+                                        <div class="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform flex items-center justify-center text-[10px] ${app.locked ? 'translate-x-5.5 text-blue-600' : 'translate-x-0.5 text-slate-500'}">
+                                            <i class="fa-solid ${app.locked ? 'fa-lock' : 'fa-lock-open'}"></i>
+                                        </div>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleLock(pkg) {
+            const app = state.apps.find(a => a.pkg === pkg);
+            if (app) {
+                app.locked = !app.locked;
+                if (!app.locked) state.unlockedApps.delete(pkg);
+                renderHome(document.getElementById('screenViewport'));
+            }
+        }
+
+        function onTapApp(pkg) {
+            const app = state.apps.find(a => a.pkg === pkg);
+            if (!app) return;
+
+            if (app.locked && !state.unlockedApps.has(pkg)) {
+                switchScreen('lock_overlay', app);
+            } else {
+                switchScreen('target_app', app);
+            }
+        }
+
+        function renderLockOverlay(el) {
+            const app = state.targetApp || state.apps[0];
+
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between text-center relative p-2">
+                    <div class="absolute top-0 right-0 bg-emerald-500/10 text-emerald-400 text-[9px] px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                        <i class="fa-solid fa-user-shield"></i> FLAG_SECURE Active
+                    </div>
+
+                    <div class="mt-6 space-y-2">
+                        <div class="w-16 h-16 mx-auto rounded-2xl ${app.bg} flex items-center justify-center ${app.color} text-3xl shadow-md">
+                            <i class="fa-solid ${app.icon}"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-white">${app.name}</h2>
+                        <div class="text-xs text-slate-400">Authentication Required</div>
+                        
+                        ${state.lockoutSeconds > 0 ? `
+                            <div class="text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/30 py-1 px-3 rounded-full inline-block">
+                                Too many wrong attempts. Try again in 0:${state.lockoutSeconds < 10 ? '0' + state.lockoutSeconds : state.lockoutSeconds}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="my-auto space-y-4">
+                        <div class="flex justify-center gap-3">
+                            ${[0,1,2,3].map(i => `
+                                <div class="w-4 h-4 rounded-full border border-slate-600 ${i < state.inputBuffer.length ? 'bg-blue-500 border-blue-500' : 'bg-transparent'}"></div>
+                            `).join('')}
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3 max-w-[240px] mx-auto">
+                            ${[1,2,3,4,5,6,7,8,9].map(num => `
+                                <button onclick="onDigit('${num}')" class="w-14 h-14 rounded-full bg-slate-800 hover:bg-slate-700 font-bold text-lg text-white transition flex items-center justify-center">${num}</button>
+                            `).join('')}
+                            <button onclick="onBiometric()" class="w-14 h-14 rounded-full bg-slate-800/50 text-blue-400 flex items-center justify-center text-lg"><i class="fa-solid fa-fingerprint"></i></button>
+                            <button onclick="onDigit('0')" class="w-14 h-14 rounded-full bg-slate-800 hover:bg-slate-700 font-bold text-lg text-white flex items-center justify-center">0</button>
+                            <button onclick="onDelDigit()" class="w-14 h-14 rounded-full bg-slate-800/50 text-slate-400 flex items-center justify-center text-sm"><i class="fa-solid fa-delete-left"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="switchScreen('home')" class="text-xs text-slate-400 hover:text-white flex items-center justify-center gap-1 mx-auto">
+                            <i class="fa-solid fa-house"></i> Back to Android Launcher
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function onDigit(digit) {
+            if (state.lockoutSeconds > 0) return;
+            state.inputBuffer += digit;
+            renderScreen();
+
+            if (state.inputBuffer.length >= 4) {
+                if (state.inputBuffer === state.pin) {
+                    state.unlockedApps.add(state.targetApp.pkg);
+                    state.failedAttempts = 0;
+                    state.inputBuffer = '';
+                    switchScreen('target_app', state.targetApp);
+                } else {
+                    state.failedAttempts++;
+                    state.inputBuffer = '';
+                    if (state.failedAttempts >= 6) {
+                        startLockout(60);
+                    } else {
+                        alert(`Incorrect PIN. ${6 - state.failedAttempts} attempts left.`);
+                        renderScreen();
+                    }
+                }
+            }
+        }
+
+        function onDelDigit() {
+            if (state.inputBuffer.length > 0) {
+                state.inputBuffer = state.inputBuffer.slice(0, -1);
+                renderScreen();
+            }
+        }
+
+        function onBiometric() {
+            if (state.lockoutSeconds > 0) return;
+            if (confirm("Simulate successful fingerprint authentication?")) {
+                state.unlockedApps.add(state.targetApp.pkg);
+                state.failedAttempts = 0;
+                switchScreen('target_app', state.targetApp);
+            }
+        }
+
+        function startLockout(secs) {
+            state.lockoutSeconds = secs;
+            renderScreen();
+            const timer = setInterval(() => {
+                state.lockoutSeconds--;
+                if (state.lockoutSeconds <= 0) {
+                    clearInterval(timer);
+                    state.failedAttempts = 0;
+                }
+                renderScreen();
+            }, 1000);
+        }
+
+        function renderTargetApp(el) {
+            const app = state.targetApp || state.apps[0];
+
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between text-center p-3">
+                    <div class="mt-8 space-y-4">
+                        <div class="w-20 h-20 mx-auto rounded-2xl ${app.bg} flex items-center justify-center ${app.color} text-4xl shadow-xl">
+                            <i class="fa-solid ${app.icon}"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white">${app.name}</h2>
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                            <i class="fa-solid fa-unlock"></i> Unlocked Session Active
+                        </div>
+                        <p class="text-xs text-slate-400 px-4">
+                            You are now safely inside ${app.name}. Leaving this app will automatically re-lock it according to your policy.
+                        </p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <button onclick="switchScreen('home')" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs">
+                            Exit App (Triggers Relock)
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSettings(el) {
+            el.innerHTML = `
+                <div class="h-full flex flex-col justify-between p-2">
+                    <div class="space-y-3">
+                        <button onclick="switchScreen('home')" class="text-xs text-blue-400 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-left"></i> Back to Home
+                        </button>
+                        <h2 class="text-lg font-bold text-white">AppLock Settings</h2>
+                        
+                        <div class="space-y-2 text-xs">
+                            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-white">Relock Policy</div>
+                                    <div class="text-[10px] text-slate-400">Immediately after leaving app</div>
+                                </div>
+                                <i class="fa-solid fa-chevron-right text-slate-500"></i>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-white">Fingerprint Unlock</div>
+                                    <div class="text-[10px] text-slate-400">Enabled</div>
+                                </div>
+                                <span class="w-8 h-4 rounded-full bg-blue-600 inline-block relative"><span class="w-3 h-3 rounded-full bg-white absolute right-0.5 top-0.5"></span></span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-white">App Version</div>
+                                    <div class="text-[10px] text-slate-400">1.0.0 (Build 100)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderScreen();
+    </script>
+</body>
+</html>
