@@ -9,11 +9,13 @@
 
 ---
 
-## 📲 App Installation & Download Link
+## 📲 App Installation & Download Links
 
 Click below to download and install the latest signed release APK directly on your Android device:
 
-📥 **[Download Release APK (Version NKJ.15.18)](https://firebaseappdistribution.googleapis.com/app-binary-downloads/projects/837855615393/apps/1:837855615393:android:af228e02ea6fa0598c13e0/releases/4u5cuftsu5flg/binaries/8694f9ed00f50eaef9feb84a8b7900d356523b0f74c0f40cd44215a051f07ca2/app.apk?utm_source=firebase-tools&token=AEbaB5wAAAAAaqau8mJTOzTqNAcZSYYVZ1SBxjY8xf5dwn_saWZI5gMSyEb9zXASKrKTl1wvShOoPbEr-ufyz9GDmKamvAHGG7dgLJ_XebECrAJHX0L9KgGn7KwV-XiUkex7Ls4OgbxeNLpjRSBNYoCitO_GgJ0A0VLcaoQVjTQ2c95tqSBBQSr-X-Hmzs9NEN6tt2S93_QdUzZo8dq55dYuYaThImSZny1YqsYjgbQmTgB4JAwswkV42mduGcbW0wnHj4vN_54ELt4MbGwMdDgCFZEYNrv3LNcMHJewHGrv9DK51OseCX618gbs5UxM6TFKphKW-mhiY-EshWcK_rMeIdMUpvIggaKpfKk)**
+📦 **[Download Direct AppLock.apk (GitHub Repository Download)](https://github.com/nikhilrana2715/App-Lock/raw/main/AppLock.apk)**
+
+📥 **[Download Release APK (Firebase Mirror)](https://firebaseappdistribution.googleapis.com/app-binary-downloads/projects/837855615393/apps/1:837855615393:android:af228e02ea6fa0598c13e0/releases/4u5cuftsu5flg/binaries/8694f9ed00f50eaef9feb84a8b7900d356523b0f74c0f40cd44215a051f07ca2/app.apk?utm_source=firebase-tools&token=AEbaB5wAAAAAaqau8mJTOzTqNAcZSYYVZ1SBxjY8xf5dwn_saWZI5gMSyEb9zXASKrKTl1wvShOoPbEr-ufyz9GDmKamvAHGG7dgLJ_XebECrAJHX0L9KgGn7KwV-XiUkex7Ls4OgbxeNLpjRSBNYoCitO_GgJ0A0VLcaoQVjTQ2c95tqSBBQSr-X-Hmzs9NEN6tt2S93_QdUzZo8dq55dYuYaThImSZny1YqsYjgbQmTgB4JAwswkV42mduGcbW0wnHj4vN_54ELt4MbGwMdDgCFZEYNrv3LNcMHJewHGrv9DK51OseCX618gbs5UxM6TFKphKW-mhiY-EshWcK_rMeIdMUpvIggaKpfKk)**
 
 🌐 **[Firebase App Distribution Tester Link](https://appdistribution.firebase.google.com/testerapps/1:837855615393:android:af228e02ea6fa0598c13e0/releases/4u5cuftsu5flg)**
 
